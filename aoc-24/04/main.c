@@ -9,6 +9,7 @@ int main() {
 
   /*FILE *f = fopen("sample.txt", "r");*/
   FILE *f = fopen("input.txt", "r");
+
   if (f == NULL) {
     printf("file pointer is null");
     return 1;
@@ -38,55 +39,78 @@ int main() {
 
   for (int line = 0; line < MAX_SIZE + 2; line++) {
     for (int col = 0; col < MAX_SIZE + 2; col++) {
-      /*printf("%c", lm[line][col]);*/
-      if (lm[line][col] == 'X') {
-        // X...
-        if (lm[line][col + 1] == 'M' && lm[line][col + 2] == 'A' &&
-            lm[line][col + 3] == 'S') {
+      // PART TWO
+      if (lm[line][col] == 'A') {
+        // M.S
+        // .A.
+        // M.S
+        if (lm[line - 1][col - 1] == 'M' && lm[line - 1][col + 1] == 'S' &&
+            lm[line + 1][col - 1] == 'M' && lm[line + 1][col + 1] == 'S') {
           count++;
         }
-        // ...X
-        if (lm[line][col - 1] == 'M' && lm[line][col - 2] == 'A' &&
-            lm[line][col - 3] == 'S') {
+        if (lm[line - 1][col - 1] == 'M' && lm[line - 1][col + 1] == 'M' &&
+            lm[line + 1][col - 1] == 'S' && lm[line + 1][col + 1] == 'S') {
           count++;
         }
-        // .
-        // X
-        if (lm[line - 1][col] == 'M' && lm[line - 2][col] == 'A' &&
-            lm[line - 3][col] == 'S') {
+        if (lm[line - 1][col - 1] == 'S' && lm[line - 1][col + 1] == 'M' &&
+            lm[line + 1][col - 1] == 'S' && lm[line + 1][col + 1] == 'M') {
           count++;
         }
-        // X
-        // .
-        if (lm[line + 1][col] == 'M' && lm[line + 2][col] == 'A' &&
-            lm[line + 3][col] == 'S') {
-          count++;
-        }
-        //  .
-        // X
-        if (lm[line - 1][col + 1] == 'M' && lm[line - 2][col + 2] == 'A' &&
-            lm[line - 3][col + 3] == 'S') {
-          count++;
-        }
-        // .
-        //  X
-        if (lm[line - 1][col - 1] == 'M' && lm[line - 2][col - 2] == 'A' &&
-            lm[line - 3][col - 3] == 'S') {
-          count++;
-        }
-        // X
-        //  .
-        if (lm[line + 1][col + 1] == 'M' && lm[line + 2][col + 2] == 'A' &&
-            lm[line + 3][col + 3] == 'S') {
-          count++;
-        }
-        //  X
-        // .
-        if (lm[line + 1][col - 1] == 'M' && lm[line + 2][col - 2] == 'A' &&
-            lm[line + 3][col - 3] == 'S') {
+        if (lm[line - 1][col - 1] == 'S' && lm[line - 1][col + 1] == 'S' &&
+            lm[line + 1][col - 1] == 'M' && lm[line + 1][col + 1] == 'M') {
           count++;
         }
       }
+
+      // PART ONE
+      /*if (lm[line][col] == 'X') {*/
+      /*  // X...*/
+      /*  if (lm[line][col + 1] == 'M' && lm[line][col + 2] == 'A' &&*/
+      /*      lm[line][col + 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  // ...X*/
+      /*  if (lm[line][col - 1] == 'M' && lm[line][col - 2] == 'A' &&*/
+      /*      lm[line][col - 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  // .*/
+      /*  // X*/
+      /*  if (lm[line - 1][col] == 'M' && lm[line - 2][col] == 'A' &&*/
+      /*      lm[line - 3][col] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  // X*/
+      /*  // .*/
+      /*  if (lm[line + 1][col] == 'M' && lm[line + 2][col] == 'A' &&*/
+      /*      lm[line + 3][col] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  //  .*/
+      /*  // X*/
+      /*  if (lm[line - 1][col + 1] == 'M' && lm[line - 2][col + 2] == 'A' &&*/
+      /*      lm[line - 3][col + 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  // .*/
+      /*  //  X*/
+      /*  if (lm[line - 1][col - 1] == 'M' && lm[line - 2][col - 2] == 'A' &&*/
+      /*      lm[line - 3][col - 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  // X*/
+      /*  //  .*/
+      /*  if (lm[line + 1][col + 1] == 'M' && lm[line + 2][col + 2] == 'A' &&*/
+      /*      lm[line + 3][col + 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*  //  X*/
+      /*  // .*/
+      /*  if (lm[line + 1][col - 1] == 'M' && lm[line + 2][col - 2] == 'A' &&*/
+      /*      lm[line + 3][col - 3] == 'S') {*/
+      /*    count++;*/
+      /*  }*/
+      /*}*/
     }
   }
 
