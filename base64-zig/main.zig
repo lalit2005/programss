@@ -22,8 +22,8 @@ const Base64 = struct {
             if (c == char) return i;
             i += 1;
         }
-        std.debug.print("INVALID CHARACTER FOUND IN DECODED STRING WHILE ENCODING: {c}", .{char});
-        return '$';
+        std.debug.print("INVALID CHARACTER FOUND IN ENCODED STRING WHILE DECODING: {c}\n", .{char});
+        @panic("INVALID CHARACTER FOUND");
     }
 
     pub fn _calc_encode_length(input: []const u8) !usize {
@@ -48,10 +48,10 @@ const Base64 = struct {
         return (input.len / 4) * 3;
     }
 
-    pub fn decode(self: Base64, input: []const u8, allcoator: std.mem.Allocator) ![]const u8 {
+    pub fn decode(self: Base64, input: []const u8, allocator: std.mem.Allocator) ![]const u8 {
         var window: usize = 0;
         const decoded_len = try Base64._calc_decode_length(input);
-        const decoded_buffer = try allcoator.alloc(u8, decoded_len);
+        const decoded_buffer = try allocator.alloc(u8, decoded_len);
         // std.debug.print("leeeneggtthhh: {d}\n", .{decoded_len});
         var decoded_buffer_len: usize = 0;
 
@@ -133,9 +133,14 @@ pub fn main() !void {
     const b = Base64.init();
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     var allocator = gpa.allocator();
-    const input = "var gpa = std.heap.GeneralPurposeAllocator(.{}){};";
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == std.heap.Check.leak) std.debug.print("Leaked memory detected!\n", .{});
+    }
+    const input = "hello world";
     const str = try b.encode(input, allocator);
     const d_str = try b.decode(str, allocator);
+    defer allocator.free(d_str);
     defer allocator.free(str);
     std.debug.print(" raw: {s}\n encoded: {s}\n decoded: {s}\n", .{ input, str, d_str });
 }
