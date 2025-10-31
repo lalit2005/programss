@@ -1,6 +1,8 @@
 const std = @import("std");
+const print = std.debug.print;
 
 const LEAF_MAX_LENGTH = 4;
+
 const Rope = struct {
     parent: *Rope,
     left: ?*Rope,
@@ -26,24 +28,43 @@ const Rope = struct {
         return node;
     }
 
+    pub fn concat_rope(self: *Rope, allocator: std.mem.Allocator, rope: *Rope) !*Rope {
+        const parent = try allocator.create(Rope);
+        parent.left = self;
+        parent.right = rope;
+        parent.parent = parent;
+        parent.length = 2 * parent.left.?.length;
+        return parent;
+    }
+
     pub fn free_rope(self: *Rope, allocator: std.mem.Allocator) void {
         if (self.left) |left_node| {
             free_rope(left_node, allocator);
         }
-
         if (self.right) |right_node| {
             free_rope(right_node, allocator);
         }
-
         allocator.destroy(self);
     }
 
-    pub fn print_rope(self: *Rope) void {
+    pub fn print_rope(self: *Rope, depth_indent: usize) void {
+        var temp = depth_indent;
         if (self.is_leaf()) {
-            std.debug.print("{s}", .{self.content});
+            while (temp > 0) : (temp -= 1) print("   ", .{});
+            print("  |- {s}\n", .{self.content});
         } else {
-            self.left.?.print_rope();
-            self.right.?.print_rope();
+            temp = depth_indent;
+            while (temp > 0) : (temp -= 1) print("   ", .{});
+            print("+- [{d:^3}]\n", .{self.length});
+
+            if (self.left) |left_node| {
+                left_node.print_rope(depth_indent + 1);
+            }
+
+            if (self.right) |right_node| {
+                right_node.print_rope(depth_indent + 1);
+            }
+            print("\n", .{});
         }
     }
 
@@ -53,7 +74,6 @@ const Rope = struct {
 };
 
 pub fn main() !void {
-    const a = "abcdefghij";
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
@@ -62,10 +82,14 @@ pub fn main() !void {
             @panic("memory leak detected");
         }
     }
-    const r = try Rope.create_rope(allocator, undefined, a, 0, a.len - 1);
-    defer r.free_rope(allocator);
 
-    r.*.print_rope();
-    std.debug.print("\n===========================\n", .{});
-    std.debug.print("{d}\n", .{r.length});
+    const str1 = "hello";
+    const left = try Rope.create_rope(allocator, undefined, str1, 0, str1.len - 1);
+
+    const str2 = " world but this is an extremely unbalanced tree!!";
+    const right = try Rope.create_rope(allocator, undefined, str2, 0, str2.len - 1);
+
+    const str = try left.concat_rope(allocator, right);
+    defer str.free_rope(allocator);
+    str.print_rope(0);
 }
