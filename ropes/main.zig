@@ -2,10 +2,11 @@ const std = @import("std");
 const print = std.debug.print;
 
 const LEAF_MAX_LENGTH = 4;
+pub var SHOULD_BALANCE: bool = false;
 
 const node_color = enum { red, black, doubleblack, redblack };
 
-const Rope = struct {
+pub const Rope = struct {
     parent: *Rope,
     left: ?*Rope,
     right: ?*Rope,
@@ -33,6 +34,56 @@ const Rope = struct {
         return node;
     }
 
+    fn balance_node(self: *Rope) *Rope {
+        if (!SHOULD_BALANCE or self.is_leaf()) return self;
+
+        var parent = self;
+        const old_parent = parent;
+        const left_size = parent.left.?.size;
+        const right_size = parent.right.?.size;
+        const diff = @as(isize, @intCast(left_size)) - @as(isize, @intCast(right_size));
+
+        if (@abs(diff) > 10) {
+            if (old_parent.left.?.size > old_parent.right.?.size) {
+                parent = parent.left.?;
+                parent.right.?.parent = old_parent;
+                old_parent.left.? = parent.right.?;
+                parent.right.? = old_parent;
+                parent.parent = parent;
+
+                // parent.weight does not change
+                // old_parent.weight = parent.size - parent.weight;
+                parent.size = old_parent.size;
+                old_parent.weight = old_parent.left.?.size;
+                old_parent.size = old_parent.right.?.size + old_parent.left.?.size;
+            } else {
+                parent = parent.right.?;
+                parent.left.?.parent = old_parent;
+                old_parent.right.? = parent.left.?;
+                parent.left.? = old_parent;
+                parent.parent = parent;
+
+                // old_parent.weight remains same
+                parent.size = old_parent.size;
+                old_parent.size = old_parent.left.?.size + old_parent.right.?.size;
+                parent.weight = old_parent.size;
+            }
+        }
+
+        if (!parent.left.?.is_leaf()) {
+            parent.left = balance_node(parent.left.?);
+        }
+        if (!parent.right.?.is_leaf()) {
+            parent.right = balance_node(parent.right.?);
+        }
+
+        return parent;
+    }
+
+    // pub fn check_balance(self: *Rope) void {
+    //
+    // }
+
     pub fn concat_rope(self: *Rope, allocator: std.mem.Allocator, rope: *Rope) !*Rope {
         var parent = try allocator.create(Rope);
         parent.left = self;
@@ -41,33 +92,15 @@ const Rope = struct {
         parent.weight = self.size;
         parent.size = self.size + rope.size;
 
-        const old_parent = parent;
-        const left_size = parent.left.?.size;
-        const right_size = parent.right.?.size;
-        const diff = @as(isize, @intCast(left_size)) - @as(isize, @intCast(right_size));
-        if (@abs(diff) > 10) {
-            if (parent.left.?.size / 2 > parent.right.?.size) {
-                parent = parent.left.?;
-                parent.right.?.parent = old_parent;
-                old_parent.left.? = parent.right.?;
-                parent.right.? = old_parent;
-                parent.parent = parent;
-            } else if (parent.right.?.size / 2 > parent.left.?.size) {
-                parent = parent.right.?;
-                parent.left.?.parent = old_parent;
-                old_parent.right.? = parent.left.?;
-                parent.left.? = old_parent;
-                parent.parent = parent;
-            }
-        }
+        const new_parent = balance_node(parent);
 
-        return parent;
+        return new_parent;
     }
 
     // puts the result leaf that contains the index in the pointer, is optional
     pub fn search_rope(self: *Rope, index: usize, leaf: ?**Rope, index_in_substr: ?*usize) u8 {
         if (index + 1 > self.size) {
-            print("index: {d}; len: {d}\n", .{ index, self.size });
+            print("\nindex: {d}; len: {d}\n", .{ index, self.size });
             @panic("index overflow while searching rope.\n");
         }
         var node = self;
@@ -94,7 +127,7 @@ const Rope = struct {
     // returns the new parent that has 2 split substrings
     pub fn split_rope_after(self: *Rope, allocator: std.mem.Allocator, index: usize) !*Rope {
         if (index + 1 > self.size) {
-            print("index: {d}; len: {d}\n", .{ index, self.size });
+            print("\nindex: {d}; len: {d}\n", .{ index, self.size });
             @panic("index overflow while splitting rope.\n");
         }
         var parent: *Rope = undefined;
@@ -119,25 +152,45 @@ const Rope = struct {
         allocator.destroy(self);
     }
 
-    pub fn print_rope(self: *Rope, depth_indent: usize) void {
-        var temp = depth_indent;
+    fn print_rope_recursive(self: *Rope, allocator: std.mem.Allocator, prefix: []const u8, is_tail: bool) void {
+        print("{s}{s}", .{ prefix, if (is_tail) "└──" else "├──" });
+
         if (self.is_leaf()) {
-            while (temp > 0) : (temp -= 1) print("   ", .{});
-            print(" |-[{d:^3}] ", .{self.weight});
-            print("{s}\n", .{self.content});
+            print("-[{d:^3}] \"{s}\"\n", .{ self.weight, self.content });
         } else {
-            temp = depth_indent;
-            while (temp > 0) : (temp -= 1) print("   ", .{});
-            print("+-[{d:^3}]\n", .{self.weight});
+            print("+[{d:^3},{d:^3}]\n", .{ self.weight, self.size });
 
-            if (self.left) |left_node| {
-                left_node.print_rope(depth_indent + 1);
-            }
+            const new_prefix = std.fmt.allocPrint(allocator, "{s}{s}", .{ prefix, if (is_tail) "    " else "│   " }) catch @panic("alloc print failed");
+            defer allocator.free(new_prefix);
 
-            if (self.right) |right_node| {
-                right_node.print_rope(depth_indent + 1);
+            if (self.left) |left| {
+                if (self.right) |right| {
+                    left.print_rope_recursive(allocator, new_prefix, false);
+                    right.print_rope_recursive(allocator, new_prefix, true);
+                } else {
+                    left.print_rope_recursive(allocator, new_prefix, true);
+                }
+            } else if (self.right) |right| {
+                right.print_rope_recursive(allocator, new_prefix, true);
             }
-            print("\n", .{});
+        }
+    }
+
+    pub fn print_rope(self: *Rope, allocator: std.mem.Allocator) void {
+        if (self.is_leaf()) {
+            print("-[{d:^3}] \"{s}\"\n", .{ self.weight, self.content });
+        } else {
+            print("+[{d:^3},{d:^3}]\n", .{ self.weight, self.size });
+            if (self.left) |left| {
+                if (self.right) |right| {
+                    left.print_rope_recursive(allocator, "", false);
+                    right.print_rope_recursive(allocator, "", true);
+                } else {
+                    left.print_rope_recursive(allocator, "", true);
+                }
+            } else if (self.right) |right| {
+                right.print_rope_recursive(allocator, "", true);
+            }
         }
     }
 
@@ -156,25 +209,39 @@ pub fn main() !void {
         }
     }
 
-    const str1 = "abcd";
+    const args = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, args);
+    if (args.len > 1 and std.mem.eql(u8, args[1], "bal")) {
+        print("\nBalancing the Tree\n", .{});
+        SHOULD_BALANCE = true;
+    } else {
+        print("\n\n", .{});
+    }
+
+    const str1 = "hello beautiful ";
     const left = try Rope.create_rope(allocator, undefined, str1, 0, str1.len - 1);
 
-    const str2 = "helko_this_is_a_really_huge_but_should_get_normalized_ig_in_this_";
-    // const str2 = " world but this is an extremely unbalanced tree!!";
+    // const str2 = "";
+    const str2 = "world";
     const right = try Rope.create_rope(allocator, undefined, str2, 0, str2.len - 1);
 
-    const str = try left.concat_rope(allocator, right);
+    var str = try left.concat_rope(allocator, right);
     defer str.free_rope(allocator);
 
-    // _ = try str.split_rope_after(allocator, 1);
-    // _ = try str.split_rope_after(allocator, 6);
-    // _ = try str.split_rope_after(allocator, 0);
-    // _ = try str.split_rope_after(allocator, 5);
+    _ = try str.split_rope_after(allocator, 1);
+    _ = try str.split_rope_after(allocator, 6);
+    _ = try str.split_rope_after(allocator, 0);
+    _ = try str.split_rope_after(allocator, 5);
 
-    str.print_rope(0);
+    const s3 = ".";
+    const str3 = try Rope.create_rope(allocator, undefined, s3, 0, s3.len - 1);
+
+    str = try str.concat_rope(allocator, str3);
+
+    str.print_rope(allocator);
     // _ = str.search_rope(4);
-    // for (0..str1.len + str2.len) |i| {
-    //     const a = str.search_rope(i, null, null);
-    //     print("{c}", .{a});
-    // }
+    for (0..str1.len + str2.len) |i| {
+        const a = str.search_rope(i, null, null);
+        print("{c}", .{a});
+    }
 }
