@@ -10,4 +10,5 @@ base64-zig: a base64 encoder and decoder written in zig<br>
 sorts: an incomplete list of sorting algorithms, written in c<br>
 http-server: a basic single threaded http server written in zig<br>
 ropes: implementation of rope data structure in zig that self balances<br>
+ropeviz: rope data structure visualizer, written with zig and raylib<br>
 </samp>
