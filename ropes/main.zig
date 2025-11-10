@@ -34,6 +34,32 @@ pub const Rope = struct {
         return node;
     }
 
+    pub fn get_string(self: *Rope, allocator: std.mem.Allocator, buf: []u8) ![]u8 {
+        var buffer = buf;
+        if (self.size > buffer.len) {
+            // const len: usize = @intFromFloat(1.25 * @as(f64, @floatFromInt(self.size)));
+            buffer = try allocator.realloc(buffer, self.size);
+        }
+
+        var i: usize = 0;
+        collect_leaves(self, buffer, &i);
+
+        return buffer[0..i];
+    }
+
+    fn collect_leaves(node: ?*Rope, buffer: []u8, i: *usize) void {
+        if (node == null) return;
+        if (node.?.is_leaf()) {
+            const content = node.?.content;
+            std.mem.copyForwards(u8, buffer[i.* .. i.* + content.len], content);
+            i.* = i.* + content.len;
+            return;
+        } else {
+            collect_leaves(node.?.left, buffer, i);
+            collect_leaves(node.?.right, buffer, i);
+        }
+    }
+
     fn balance_node(self: *Rope) *Rope {
         if (!SHOULD_BALANCE or self.is_leaf()) return self;
 
@@ -79,10 +105,6 @@ pub const Rope = struct {
 
         return parent;
     }
-
-    // pub fn check_balance(self: *Rope) void {
-    //
-    // }
 
     pub fn concat_rope(self: *Rope, allocator: std.mem.Allocator, rope: *Rope) !*Rope {
         var parent = try allocator.create(Rope);
@@ -194,54 +216,60 @@ pub const Rope = struct {
         }
     }
 
-    fn is_leaf(self: *Rope) bool {
+    pub fn is_leaf(self: *Rope) bool {
         return self.left == null and self.right == null;
     }
 };
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer {
-        const deinit_status = gpa.deinit();
-        if (deinit_status == .leak) {
-            @panic("memory leak detected");
-        }
-    }
-
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
-    if (args.len > 1 and std.mem.eql(u8, args[1], "bal")) {
-        print("\nBalancing the Tree\n", .{});
-        SHOULD_BALANCE = true;
-    } else {
-        print("\n\n", .{});
-    }
-
-    const str1 = "hello beautiful ";
-    const left = try Rope.create_rope(allocator, undefined, str1, 0, str1.len - 1);
-
-    // const str2 = "";
-    const str2 = "world";
-    const right = try Rope.create_rope(allocator, undefined, str2, 0, str2.len - 1);
-
-    var str = try left.concat_rope(allocator, right);
-    defer str.free_rope(allocator);
-
-    _ = try str.split_rope_after(allocator, 1);
-    _ = try str.split_rope_after(allocator, 6);
-    _ = try str.split_rope_after(allocator, 0);
-    _ = try str.split_rope_after(allocator, 5);
-
-    const s3 = ".";
-    const str3 = try Rope.create_rope(allocator, undefined, s3, 0, s3.len - 1);
-
-    str = try str.concat_rope(allocator, str3);
-
-    str.print_rope(allocator);
-    // _ = str.search_rope(4);
-    for (0..str1.len + str2.len) |i| {
-        const a = str.search_rope(i, null, null);
-        print("{c}", .{a});
-    }
-}
+// pub fn main() !void {
+//     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+//     const allocator = gpa.allocator();
+//     defer {
+//         const deinit_status = gpa.deinit();
+//         if (deinit_status == .leak) {
+//             @panic("memory leak detected");
+//         }
+//     }
+//
+//     const args = try std.process.argsAlloc(allocator);
+//     defer std.process.argsFree(allocator, args);
+//     if (args.len > 1 and std.mem.eql(u8, args[1], "bal")) {
+//         print("\nBalancing the Tree\n", .{});
+//         SHOULD_BALANCE = true;
+//     } else {
+//         print("\n\n", .{});
+//     }
+//
+//     const str1 = "hello beautiful ";
+//     const left = try Rope.create_rope(allocator, undefined, str1, 0, str1.len - 1);
+//
+//     // const str2 = "";
+//     const str2 = "world";
+//     const right = try Rope.create_rope(allocator, undefined, str2, 0, str2.len - 1);
+//
+//     var str = try left.concat_rope(allocator, right);
+//     defer str.free_rope(allocator);
+//
+//     // _ = try str.split_rope_after(allocator, 1);
+//     // _ = try str.split_rope_after(allocator, 6);
+//     // _ = try str.split_rope_after(allocator, 0);
+//     // _ = try str.split_rope_after(allocator, 5);
+//
+//     const s3 = ".";
+//     const str3 = try Rope.create_rope(allocator, undefined, s3, 0, s3.len - 1);
+//
+//     str = try str.concat_rope(allocator, str3);
+//
+//     str.print_rope(allocator);
+//     // _ = str.search_rope(4);
+//     // for (0..str1.len + str2.len + 1) |i| {
+//     //     const a = str.search_rope(i, null, null);
+//     //     print("{c}", .{a});
+//     // }
+//     // print("\n", .{});
+//
+//     const buffer = try allocator.alloc(u8, 0);
+//     const out_str = try str.get_string(allocator, buffer);
+//     defer allocator.free(out_str);
+//     print("{s}\n", .{out_str});
+// }

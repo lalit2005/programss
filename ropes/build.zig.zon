@@ -1,0 +1,8 @@
+.{
+    .name = "ropes",
+    .version = "0.0.0",
+    .paths = .{
+        "build.zig",
+        "main.zig",
+    },
+}
