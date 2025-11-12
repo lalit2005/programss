@@ -17,3 +17,9 @@ make
 - enter - pause/resume the simulation
 - left-shift + move - marks along the path of cursor movement
 - right-shift + move - clears the cell along the path of cursor movement
+
+----------
+
+**demo**
+
+https://github.com/user-attachments/assets/e163c6cf-5290-4d01-9815-a12339c4530c
