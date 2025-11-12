@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCKS 50
+#define BLOCKS 100
 #define MARK_ON_SHIFT                                                          \
   if (IsKeyDown(KEY_LEFT_SHIFT) && !is_sim_running) {                          \
     current_state[cursor] = 1;                                                 \
@@ -94,15 +94,15 @@ int main() {
   // 111111 11  1
   // 012345678901
   int initial_coordinates[][2] = {
-      {INITIAL_POS, INITIAL_POS},         {INITIAL_POS + 3, INITIAL_POS},
-      {INITIAL_POS + 4, INITIAL_POS},     {INITIAL_POS + 6, INITIAL_POS},
-      {INITIAL_POS + 7, INITIAL_POS},     {INITIAL_POS + 8, INITIAL_POS},
-      {INITIAL_POS + 9, INITIAL_POS},     {INITIAL_POS + 11, INITIAL_POS},
-      {INITIAL_POS, INITIAL_POS + 1},     {INITIAL_POS + 1, INITIAL_POS + 1},
-      {INITIAL_POS + 2, INITIAL_POS + 1}, {INITIAL_POS + 3, INITIAL_POS + 1},
-      {INITIAL_POS + 4, INITIAL_POS + 1}, {INITIAL_POS + 5, INITIAL_POS + 1},
-      {INITIAL_POS + 7, INITIAL_POS + 1}, {INITIAL_POS + 8, INITIAL_POS + 1},
-      {INITIAL_POS + 1, INITIAL_POS + 1},
+      // {INITIAL_POS, INITIAL_POS},         {INITIAL_POS + 3, INITIAL_POS},
+      // {INITIAL_POS + 4, INITIAL_POS},     {INITIAL_POS + 6, INITIAL_POS},
+      // {INITIAL_POS + 7, INITIAL_POS},     {INITIAL_POS + 8, INITIAL_POS},
+      // {INITIAL_POS + 9, INITIAL_POS},     {INITIAL_POS + 11, INITIAL_POS},
+      // {INITIAL_POS, INITIAL_POS + 1},     {INITIAL_POS + 1, INITIAL_POS + 1},
+      // {INITIAL_POS + 2, INITIAL_POS + 1}, {INITIAL_POS + 3, INITIAL_POS + 1},
+      // {INITIAL_POS + 4, INITIAL_POS + 1}, {INITIAL_POS + 5, INITIAL_POS + 1},
+      // {INITIAL_POS + 7, INITIAL_POS + 1}, {INITIAL_POS + 8, INITIAL_POS + 1},
+      // {INITIAL_POS + 1, INITIAL_POS + 1},
   };
 
   printf("\n\n\nSIZEEE: %zu\n\n\n",
