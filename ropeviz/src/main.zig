@@ -69,9 +69,10 @@ pub fn main() !void {
         rl.beginDrawing();
         defer rl.endDrawing();
         rl.clearBackground(.white);
-        rl.drawTextEx(FONT, "TEXT STRING: ", .{ .x = 10, .y = 10 }, REGULAR_FONT, 0, .black);
+        rl.drawTextEx(FONT, "TEST STRING: ", .{ .x = 10, .y = 10 }, REGULAR_FONT, 0, .black);
         rl.drawTextEx(FONT, convert_to_ctext(allocator, buffer) catch unreachable, .{ .x = 10, .y = 35 }, REGULAR_FONT, 0, .black);
-        var x: f32 = (SCREEN_WIDTH - @as(f32, @floatFromInt(str_rope.size)) * 35) / 2; // initial padding
+        var x: f32 = 10; // initial padding
+        // var x: f32 = (SCREEN_WIDTH - @as(f32, @floatFromInt(str_rope.size)) * 35) / 2; // initial padding
         try draw_tree(allocator, str_rope, &FONT, &x, 10);
         rl.drawTextEx(FONT, "written by lalit.", .{ .x = 1400, .y = 870 }, REGULAR_FONT, 0, .red);
     }
