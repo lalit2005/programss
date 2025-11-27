@@ -124,7 +124,9 @@ int main() {
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(WHITE);
-    SetTargetFPS(50);
+    if (is_sim_running) {
+      SetTargetFPS(50);
+    }
 
     handle_keybindings(previous_state, current_state);
 
