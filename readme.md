@@ -11,3 +11,4 @@ also has the few programs that i wrote for advent of code.
 - **ropeviz**: rope data structure visualizer, written with zig and raylib
 - **conway's game of life**: written in c & raylib
 - **bootloader**: a simple tiny bootloader similar to mbr written in assembly
+- **grep** : a simple grep tool written in c
