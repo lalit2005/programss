@@ -1,2 +1,4 @@
 **/*.out
 **/main
+**/__pycache__
+
