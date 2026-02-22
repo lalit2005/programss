@@ -7,11 +7,21 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define UNDERLINE_START "\x1b[4m"
+#define UNDERLINE_STOP "\x1b[24m"
+#define BOLD_START "\x1b[1m"
+#define BOLD_STOP "\x1b[22m"
+#define GREEN_FG "\x1b[38;5;118m"
+#define RESET_STYLE "\x1b[0m"
+#define CURSOR_UP "\x1b[1A"
+#define ERASE_LINE "\x1b[2K"
+
 int depth = 1;
 int case_sensitive = 0;
 int show_ignored_files = 0;
 int is_gitignore_present = 0;
 int gitignore_files_idx = 0;
+int should_print_config = 0;
 ino_t gitignore_files[256];
 int total_results_count = 0;
 
@@ -62,9 +72,9 @@ void gitignore_init() {
   }
 }
 
-void search_file(const char *filename, const char *query) {
+void search_file(const char *file_path, const char *query) {
   int query_len = strlen(query);
-  FILE *fp = fopen(filename, "r");
+  FILE *fp = fopen(file_path, "r");
   char buf[256];
   int line = 0;
   char *result = NULL;
@@ -73,25 +83,67 @@ void search_file(const char *filename, const char *query) {
     line++;
     if (case_sensitive) {
       if ((result = strstr(buf, query)) != NULL) {
-        results_count++;
-        printf("  %04d | %.*s", line, (int)(result - buf), buf);
-        printf("\x1b[1m%.*s\x1b[22m", query_len, result);
-        printf("%s\n", result + query_len);
-        // printf(const char *restrict format, ...)
+        do {
+          results_count++;
+          results_count == 1 && printf(UNDERLINE_START BOLD_START
+                                       "%s" BOLD_STOP UNDERLINE_STOP "\n",
+                                       file_path + 2); // ignore the "./"
+          printf("  %04d | %.*s", line, (int)(result - buf), buf);
+          printf(GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE, query_len,
+                 result);
+          printf("%s", result + query_len);
+        } while ((result = strstr(result + 1, query)) != NULL);
       }
     } else {
       if ((result = strcasestr(buf, query)) != NULL) {
-        results_count++;
-        // printf("  %04d | %s\n", line, buf);
-        printf("  %04d | %.*s", line, (int)(result - buf), buf);
-        printf("\x1b[38;5;118m\x1b[1m%.*s\x1b[22m\x1b[0m", query_len, result);
-        printf("%s", result + query_len);
+        do {
+          results_count++;
+          results_count == 1 && printf(UNDERLINE_START BOLD_START
+                                       "%s" BOLD_STOP UNDERLINE_STOP "\n",
+                                       file_path + 2); // ignore the "./"
+          printf("  %04d | %.*s", line, (int)(result - buf), buf);
+          printf(GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE, query_len,
+                 result);
+          printf("%s", result + query_len);
+        } while ((result = strcasestr(result + 1, query)) != NULL);
+      }
+      // maka yela maka yela
+    }
+  }
+  if (results_count > 0) {
+    printf("%d match%s found in \"%s\"\n", results_count,
+           results_count > 1 ? "es" : "", file_path);
+    printf("\n");
+  }
+  total_results_count += results_count;
+  fclose(fp);
+}
+
+void search_directory(const char *path, const char *query, int rem_depth) {
+  if (rem_depth < 1)
+    return;
+
+  DIR *d = opendir(path);
+  struct dirent *de;
+
+  while ((de = readdir(d)) != NULL) {
+    if (de->d_name[0] == '.')
+      // if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+      continue;
+
+    if (!gitignore_contains(de->d_ino)) {
+      char new_path[2048];
+      new_path[0] = '\0';
+      strcat(new_path, path);
+      strcat(new_path, "/");
+      strcat(new_path, de->d_name);
+      if (de->d_type == DT_REG) {
+        search_file(new_path, query);
+      } else if (de->d_type == DT_DIR) {
+        search_directory(new_path, query, rem_depth - 1);
       }
     }
   }
-  printf("%d matches found in \"%s\"\n", results_count, filename);
-  total_results_count += results_count;
-  fclose(fp);
 }
 
 int main(int argc, char *argv[]) {
@@ -102,6 +154,7 @@ int main(int argc, char *argv[]) {
         "-i    Performs case sensitive search. Case insensitive by default\n");
     printf("-d=n  Depth (not implemented yet)\n");
     printf("-g    List ignored files along with search results\n");
+    printf("-c    Print config for the search\n");
     return 0;
   }
 
@@ -112,6 +165,8 @@ int main(int argc, char *argv[]) {
       case_sensitive = 1;
     } else if (strcmp(argv[i], "-g") == 0) {
       show_ignored_files = 1;
+    } else if (strcmp(argv[i], "-c") == 0) {
+      should_print_config = 1;
     } else if (strncmp(argv[i], "-d=", 3) == 0) {
       char *endptr;
       long n = strtol(argv[i] + 3, &endptr, 10);
@@ -126,26 +181,18 @@ int main(int argc, char *argv[]) {
 
   gitignore_init();
 
-  // print_config(query);
-  // printf("===================\n");
+  printf(BOLD_START "Searching for \"%s\"" BOLD_START "\n\n", query);
 
-  DIR *d = opendir(".");
-  struct dirent *de;
+  search_directory(".", query, depth);
 
-  while ((de = readdir(d)) != NULL) {
-    if (de->d_name[0] == '.')
-      // if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-      continue;
-    if (gitignore_contains(de->d_ino) == 0) {
-      printf("\x1b[4m\x1b[1m%s\x1b[22m\x1b[24m\n",
-             de->d_name); // underline file names
-      search_file(de->d_name, query);
-      printf("\n\n");
-    }
+  if (should_print_config) {
+    print_config(query);
+    printf("===================\n");
   }
 
   printf("\n");
-  printf("Found %d matches\n", total_results_count);
+  printf("Found %d match%s\n", total_results_count,
+         total_results_count > 1 ? "es" : "");
 
   return 0;
 }
