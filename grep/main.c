@@ -13,6 +13,8 @@
 #define BOLD_STOP "\x1b[22m"
 #define GREEN_FG "\x1b[38;5;118m"
 #define RESET_STYLE "\x1b[0m"
+#define DIM_START "\x1b[2m"
+#define DIM_STOP "\x1b[22m"
 #define CURSOR_UP "\x1b[1A"
 #define ERASE_LINE "\x1b[2K"
 
@@ -79,37 +81,54 @@ void search_file(const char *file_path, const char *query) {
   int line = 0;
   char *result = NULL;
   int results_count = 0;
+  int dim_flag = 0;
   while (fgets(buf, sizeof(buf), fp) != NULL) {
     line++;
     if (case_sensitive) {
       if ((result = strstr(buf, query)) != NULL) {
+        if (dim_flag)
+          printf(DIM_START);
         do {
           results_count++;
           results_count == 1 && printf(UNDERLINE_START BOLD_START
                                        "%s" BOLD_STOP UNDERLINE_STOP "\n",
                                        file_path + 2); // ignore the "./"
           printf("  %04d | %.*s", line, (int)(result - buf), buf);
-          printf(GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE, query_len,
-                 result);
+          printf(RESET_STYLE GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE,
+                 query_len, result);
+
+          if (dim_flag)
+            printf(DIM_START);
+
           printf("%s", result + query_len);
-        } while ((result = strstr(result + 1, query)) != NULL);
+        } while ((result = strstr(result + query_len, query)) != NULL);
+        printf(DIM_STOP);
+        dim_flag = !dim_flag;
       }
     } else {
       if ((result = strcasestr(buf, query)) != NULL) {
+        if (dim_flag)
+          printf(DIM_START);
         do {
           results_count++;
           results_count == 1 && printf(UNDERLINE_START BOLD_START
                                        "%s" BOLD_STOP UNDERLINE_STOP "\n",
                                        file_path + 2); // ignore the "./"
           printf("  %04d | %.*s", line, (int)(result - buf), buf);
-          printf(GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE, query_len,
-                 result);
+          printf(RESET_STYLE GREEN_FG BOLD_START "%.*s" BOLD_STOP RESET_STYLE,
+                 query_len, result);
+
+          if (dim_flag)
+            printf(DIM_START);
+
           printf("%s", result + query_len);
-        } while ((result = strcasestr(result + 1, query)) != NULL);
+        } while ((result = strcasestr(result + query_len, query)) != NULL);
+        printf(DIM_STOP);
+        dim_flag = !dim_flag;
       }
-      // maka yela maka yela
     }
   }
+
   if (results_count > 0) {
     printf("%d match%s found in \"%s\"\n", results_count,
            results_count > 1 ? "es" : "", file_path);
