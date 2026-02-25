@@ -12,4 +12,4 @@ also has the few programs that i wrote for advent of code.
 - **conway's game of life**: written in c & raylib
 - **bootloader**: a simple tiny bootloader similar to mbr written in assembly
 - **grep**: a simple grep tool written in c
-- sp-algo: a sardina patterson algorithm written in python
+- **sp-algo**: a sardina patterson algorithm written in python

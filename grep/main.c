@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     printf("$ grep.out hello [flags]\n\n");
     printf(
         "-i    Performs case sensitive search. Case insensitive by default\n");
-    printf("-d=n  Depth (not implemented yet)\n");
+    printf("-d=n  Depth\n");
     printf("-g    List ignored files along with search results\n");
     printf("-c    Print config for the search\n");
     return 0;
